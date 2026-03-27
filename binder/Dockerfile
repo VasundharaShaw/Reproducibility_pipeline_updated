@@ -31,10 +31,11 @@ RUN pip install --no-cache-dir \
     requests
 
 # Required for Binder/NFDI to work
-ARG NB_USER
-ARG NB_UID
+ARG NB_USER=jovyan
+ARG NB_UID=1000
 ENV USER=${NB_USER}
 ENV HOME=/home/${NB_USER}
+ENV PATH="/usr/local/bin:${PATH}"
 
 RUN adduser --disabled-password \
     --gecos "Default user" \
@@ -44,6 +45,6 @@ RUN adduser --disabled-password \
 WORKDIR ${HOME}
 
 # Make shell scripts executable
-COPY . ${HOME}
+COPY --chown=${NB_USER}:${NB_USER} . ${HOME}
 RUN chmod +x ${HOME}/scripts/main.sh && \
     chmod +x ${HOME}/lib/*.sh
