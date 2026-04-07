@@ -1,7 +1,10 @@
-#!/bin/bash
-# Install Docker CLI
-curl -fsSL https://get.docker.com | sh
+# Install pyenv
+curl https://pyenv.run | bash
 
-# Make scripts executable
-chmod +x scripts/main.sh
-chmod +x lib/*.sh
+# Add pyenv to PATH for this session and future ones
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
+eval "$(pyenv init -)"
+
+# Verify
+pyenv --version
