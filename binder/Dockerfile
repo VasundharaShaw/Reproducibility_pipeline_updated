@@ -15,6 +15,9 @@ RUN apt-get update -qq && \
         wget \
         git \
         sqlite3 \
+        python3.10 \
+        python3.10-venv \
+        python3-pip \
         make \
         build-essential \
         libssl-dev \
@@ -28,6 +31,15 @@ RUN apt-get update -qq && \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------
+# Install Jupyter via pip (no conda at all)
+# ---------------------------------------------------------------
+RUN python3.10 -m pip install --no-cache-dir --upgrade pip && \
+    python3.10 -m pip install --no-cache-dir \
+        notebook \
+        jupyterlab \
+        nbconvert
+
+# ---------------------------------------------------------------
 # Create jovyan user (matches NFDI expectation)
 # ---------------------------------------------------------------
 RUN groupadd --gid ${NB_UID} ${NB_USER} && \
@@ -39,31 +51,6 @@ RUN groupadd --gid ${NB_UID} ${NB_USER} && \
         --shell /bin/bash \
         --uid ${NB_UID} \
         ${NB_USER}
-
-# ---------------------------------------------------------------
-# Install Miniconda — using conda-forge channel only
-# ---------------------------------------------------------------
-ENV CONDA_DIR=/opt/conda
-ENV PATH=${CONDA_DIR}/bin:${PATH}
-
-RUN wget -qO /tmp/miniconda.sh \
-        https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash /tmp/miniconda.sh -b -p ${CONDA_DIR} && \
-    rm /tmp/miniconda.sh && \
-    conda config --system --prepend channels conda-forge && \
-    conda config --system --remove channels defaults || true && \
-    conda config --system --set channel_priority strict && \
-    conda clean -afy
-
-# ---------------------------------------------------------------
-# Install Jupyter via conda-forge (no defaults channel)
-# ---------------------------------------------------------------
-RUN conda install -y -c conda-forge \
-        python=3.10 \
-        notebook \
-        jupyterlab \
-        nbconvert \
-    && conda clean -afy
 
 # ---------------------------------------------------------------
 # Install pyenv as jovyan user
