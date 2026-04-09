@@ -36,7 +36,7 @@ detect_python_version() {
     if [ -f "$repo_dir/binder/runtime.txt" ]; then
         version=$(grep -i "^python-" "$repo_dir/binder/runtime.txt" | head -1 | sed 's/python-//')
         if [ -n "$version" ]; then
-            log "[PYENV] Python version from binder/runtime.txt: $version"
+            log "[PYENV] Python version from binder/runtime.txt: $version" >&2
             echo "$version"
             return
         fi
@@ -46,7 +46,7 @@ detect_python_version() {
     if [ -f "$repo_dir/runtime.txt" ]; then
         version=$(grep -i "^python-" "$repo_dir/runtime.txt" | head -1 | sed 's/python-//')
         if [ -n "$version" ]; then
-            log "[PYENV] Python version from runtime.txt: $version"
+            log "[PYENV] Python version from runtime.txt: $version" >&2
             echo "$version"
             return
         fi
@@ -56,7 +56,7 @@ detect_python_version() {
     if [ -f "$repo_dir/.python-version" ]; then
         version=$(head -1 "$repo_dir/.python-version" | xargs)
         if [ -n "$version" ]; then
-            log "[PYENV] Python version from .python-version: $version"
+            log "[PYENV] Python version from .python-version: $version" >&2
             echo "$version"
             return
         fi
@@ -67,7 +67,7 @@ detect_python_version() {
     if [ -f "$repo_dir/setup.py" ]; then
         version=$(grep -oP "python_requires\s*=\s*['\"]>=\s*\K[0-9]+\.[0-9]+" "$repo_dir/setup.py" | head -1)
         if [ -n "$version" ]; then
-            log "[PYENV] Python version from setup.py python_requires: $version"
+            log "[PYENV] Python version from setup.py python_requires: $version" >&2
             echo "$version"
             return
         fi
@@ -76,17 +76,16 @@ detect_python_version() {
     if [ -f "$repo_dir/setup.cfg" ]; then
         version=$(grep -oP "python_requires\s*=\s*>=\s*\K[0-9]+\.[0-9]+" "$repo_dir/setup.cfg" | head -1)
         if [ -n "$version" ]; then
-            log "[PYENV] Python version from setup.cfg python_requires: $version"
+            log "[PYENV] Python version from setup.cfg python_requires: $version" >&2
             echo "$version"
             return
         fi
     fi
 
     # 5. Fallback
-    log "[PYENV] No Python version hint found in repo. Defaulting to 3.10"
+    log "[PYENV] No Python version hint found in repo. Defaulting to 3.10" >&2
     echo "3.10"
 }
-
 
 # -----------------------------------------------------------------------------
 # ensure_pyenv_version()
@@ -96,14 +95,12 @@ detect_python_version() {
 ensure_pyenv_version() {
     local requested="$1"
 
-    # Check if exact version is already installed
     if pyenv versions --bare | grep -qx "$requested"; then
-        log "[PYENV] Python $requested already installed."
+        log "[PYENV] Python $requested already installed." >&2
         echo "$requested"
         return 0
     fi
 
-    # Partial version (e.g. "3.8") — find the latest matching patch
     local resolved
     resolved=$(pyenv install --list 2>/dev/null \
         | grep -E "^\s+${requested}\.[0-9]+$" \
@@ -112,27 +109,25 @@ ensure_pyenv_version() {
         | xargs)
 
     if [ -z "$resolved" ]; then
-        log "[ERROR] [PYENV] No installable Python version matches: $requested"
+        log "[ERROR] [PYENV] No installable Python version matches: $requested" >&2
         return 1
     fi
 
-    # Check if resolved version is already installed
     if pyenv versions --bare | grep -qx "$resolved"; then
-        log "[PYENV] Python $resolved already installed (resolved from $requested)."
+        log "[PYENV] Python $resolved already installed (resolved from $requested)." >&2
         echo "$resolved"
         return 0
     fi
 
-    log "[PYENV] Installing Python $resolved (resolved from $requested)..."
+    log "[PYENV] Installing Python $resolved (resolved from $requested)..." >&2
     if ! pyenv install "$resolved" >> "$LOG_FILE" 2>&1; then
-        log "[ERROR] [PYENV] Failed to install Python $resolved"
+        log "[ERROR] [PYENV] Failed to install Python $resolved" >&2
         return 1
     fi
 
-    log "[PYENV] Python $resolved installed successfully."
+    log "[PYENV] Python $resolved installed successfully." >&2
     echo "$resolved"
 }
-
 
 # -----------------------------------------------------------------------------
 # setup_pyenv_env()
