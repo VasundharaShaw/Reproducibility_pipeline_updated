@@ -181,8 +181,8 @@ get_or_create_repo_id() {
 
     # Insert minimal record
     sqlite3 "$DB_FILE" <<EOF
-INSERT INTO repositories (repository, url, notebooks, setups, requirements, notebooks_count)
-VALUES ('$repo_path', '$github_repo', '$NOTEBOOK_PATHS', '$SETUP_PATHS', '$REQUIREMENT_PATHS', 1);
+INSERT INTO repositories (repository, notebooks, setups, requirements, notebooks_count, setups_count, requirements_count)
+VALUES ('$repo_path', '$NOTEBOOK_PATHS', '$SETUP_PATHS', '$REQUIREMENT_PATHS', 1, 0, 0);
 SELECT last_insert_rowid();
 EOF
 }
