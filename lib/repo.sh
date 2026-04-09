@@ -168,6 +168,24 @@ move_repo() {
     fi
 }
 
+get_or_create_repo_id() {
+    local github_repo="$1"
+    local repo_path="${github_repo#https://github.com/}"
+
+    # Check if already exists
+    existing_id=$(sqlite3 "$DB_FILE" "SELECT id FROM repositories WHERE repository='$repo_path' LIMIT 1;")
+    if [ -n "$existing_id" ]; then
+        echo "$existing_id"
+        return 0
+    fi
+
+    # Insert minimal record
+    sqlite3 "$DB_FILE" <<EOF
+INSERT INTO repositories (repository, url, notebooks, setups, requirements, notebooks_count)
+VALUES ('$repo_path', '$github_repo', '$NOTEBOOK_PATHS', '$SETUP_PATHS', '$REQUIREMENT_PATHS', 1);
+SELECT last_insert_rowid();
+EOF
+}
 # Process the given repository
 process_repo() {
     REPO_START_TIME=$(now_sec)
