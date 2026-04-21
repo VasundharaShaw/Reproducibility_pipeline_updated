@@ -1,90 +1,8 @@
-# Containing the Reproducibility Gap
-
-**Automated Repository-Level Reproducibility Assessment for Scholarly Jupyter Notebooks**
-
-[![License: GPL-3.0](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Platform: NFDI JupyterHub](https://img.shields.io/badge/platform-NFDI%20JupyterHub-orange.svg)](https://hub.nfdi-jupyter.de)
-
----
-
-## Overview
-
-This pipeline automatically clones GitHub repositories containing Jupyter notebooks, re-executes them in isolated Python environments, and measures how reproducible the results are. It is designed to run on the **[NFDI JupyterHub](https://hub.nfdi-jupyter.de)** — no local Docker installation needed.
-
-Results are stored in a SQLite database for downstream analysis.
-
-### What it does
-
-1. **Clones** a GitHub repository containing Jupyter notebooks
-2. **Detects** the required Python version from the repo's metadata
-3. **Creates** an isolated pyenv + venv environment per repository
-4. **Executes** each notebook via `nbconvert`
-5. **Compares** original vs. re-executed outputs
-6. **Stores** cell-level reproducibility scores in a SQLite database
-
----
-
-## Running on NFDI JupyterHub (recommended)
-
-1. Go to [hub.nfdi-jupyter.de](https://hub.nfdi-jupyter.de/hub/home)
-2. Click **Start Server** and choose **Repo2docker (Binder)**
-3. Fill in the form:
-   - **Repository URL**: `https://github.com/VasundharaShaw/CPRPMC_test`
-   - **Git ref**: `main`
-   - **Flavor**: `4GB RAM, 1 vCPU` (minimum recommended)
-4. Click **Start** — the environment will build automatically
-5. Once JupyterLab opens, launch a terminal and run:
-
-```bash
-cd /home/jovyan/work
-git clone https://github.com/VasundharaShaw/CPRPMC_test
-cd CPRPMC_test
-bash run.sh
-```
-
----
-
-## Repository Structure
-
-```
-CPRPMC_test/
-├── run.sh                   # Single entry point — checks deps, launches pipeline
-├── input/                   # Input repo lists for batch mode
-├── output/                  # All pipeline outputs
-│   ├── db/                  # SQLite results database
-│   ├── cloned_repos/        # Cloned repositories
-│   ├── logs/                # Per-repo execution logs
-│   └── comparisons/         # JSON comparison reports
-├── config/
-│   └── config.sh            # Pipeline configuration (paths, settings)
-├── src/                     # Shell library functions
-│   ├── pyenv.sh             # Python version detection + venv isolation
-│   ├── repo.sh              # Repository cloning and processing
-│   ├── requirements.sh      # Dependency extraction
-│   ├── notebooks.sh         # Notebook comparison logic
-│   ├── db.sh                # Database operations + schema
-│   ├── checks.sh            # Pre-flight validation
-│   └── logging.sh           # Logging utilities
-├── pipeline/
-│   └── main.sh              # Main orchestrator
-├── analysis/
-│   ├── compare_notebook.py  # Output comparison script
-│   ├── analyse_reporesults.ipynb  # Explore results interactively
-│   └── nbprocess/           # Notebook processing utilities
-├── docs/
-│   ├── QUICKSTART.md
-│   └── architecture.md
-├── tests/
-│   └── test_pipeline.sh     # Smoke test
-└── binder/                  # repo2docker configuration
-```
-
 ---
 
 ## Usage
 
-Run from the repo root:
+Run from `/home/jovyan`:
 
 ```bash
 bash run.sh
@@ -103,7 +21,7 @@ Enter a GitHub repository URL directly. You will be asked for:
 
 ### Mode 2 — Batch mode
 
-Processes all repositories registered in `output/db/db.sqlite`. This is the main mode for large-scale reproducibility studies.
+Processes repositories from `data/db.sqlite` (the source database containing 5241 repositories from Sheeba Samuel's original reproducibility study). Results are written back to the same database.
 
 ---
 
@@ -130,8 +48,7 @@ Each repository gets its own isolated Python environment via **pyenv + venv**:
 Edit `config/config.sh` or set environment variables before running:
 
 ```bash
-export DB_FILE=/path/to/custom.sqlite   # Override database location
-export TARGET_COUNT=20                  # Override batch size (default: 10)
+export TARGET_COUNT=20    # Override batch size (default: 10)
 bash run.sh
 ```
 
@@ -139,9 +56,9 @@ See `.env.example` for all available options.
 
 ---
 
-## Database Schema
+## Database
 
-Results are stored in `output/db/db.sqlite`:
+`data/db.sqlite` is the source database from Sheeba Samuel's original study and contains 5241 repositories. **Do not overwrite this file.** Pipeline results (run status, notebook execution outcomes, reproducibility scores) are written to new tables within the same database.
 
 | Table | Description |
 |---|---|
