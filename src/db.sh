@@ -5,6 +5,23 @@
 
 ensure_pipeline_tables() {
     sqlite3 "$DB_FILE" <<EOF
+CREATE TABLE IF NOT EXISTS repositories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    repository TEXT,
+    notebooks TEXT,
+    setups TEXT,
+    requirements TEXT,
+    notebooks_count INTEGER,
+    setups_count INTEGER,
+    requirements_count INTEGER
+);
+CREATE TABLE IF NOT EXISTS notebooks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    repository_id INTEGER,
+    name TEXT,
+    language TEXT,
+    FOREIGN KEY (repository_id) REFERENCES repositories(id)
+);
 CREATE TABLE IF NOT EXISTS repository_runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     repository_id INTEGER NOT NULL,
