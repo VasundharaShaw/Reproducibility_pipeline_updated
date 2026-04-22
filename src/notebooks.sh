@@ -19,15 +19,15 @@ compare_notebook_outputs() {
     log "[NOTEBOOK] Comparing outputs for: $REPO_NAME"
     IFS=";" read -ra NOTEBOOK_ARRAY <<< "$NOTEBOOK_PATHS"
     for NOTEBOOK_PATH in "${NOTEBOOK_ARRAY[@]}"; do
-        if [ ! -f "$REPO_NAME/$NOTEBOOK_PATH" ]; then
-            log "[NOTEBOOK] Not found: $REPO_NAME/$NOTEBOOK_PATH — skipping"
+        if [ ! -f "$REPO_DIR/$NOTEBOOK_PATH" ]; then
+            log "[NOTEBOOK] Not found: $REPO_DIR/$NOTEBOOK_PATH — skipping"
             continue
         fi
         local notebook_dir base_name original_notebook executed_notebook comparison_result_file
         notebook_dir=$(dirname "$NOTEBOOK_PATH")
         base_name=$(basename "$NOTEBOOK_PATH" .ipynb)
-        original_notebook="$REPO_NAME/$NOTEBOOK_PATH"
-        executed_notebook="$REPO_NAME/${notebook_dir}/${base_name}_output.ipynb"
+        original_notebook="$REPO_DIR/$NOTEBOOK_PATH"
+        executed_notebook="$REPO_DIR/${notebook_dir}/${base_name}_output.ipynb"
         comparison_result_file="${COMP_DIR}/${base_name}_comparison.json"
         NOTEBOOK_ID=$(get_notebook_id_from_db "$NOTEBOOK_PATH")
         REPO_ID=$(get_repo_id_from_db "$GITHUB_REPO")
