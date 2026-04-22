@@ -47,9 +47,9 @@ prompt_for_input() {
 print_run_summary() {
     local elapsed=$(( $(date +%s) - $1 ))
     local total success failed
-    total=$(sqlite3   "$DB_FILE" "SELECT COUNT(*) FROM repository_runs;")
-    success=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM repository_runs WHERE run_status = 'SUCCESS';")
-    failed=$(sqlite3  "$DB_FILE" "SELECT COUNT(*) FROM repository_runs WHERE run_status NOT IN ('SUCCESS');")
+    total=$(sqlite3   "$OUTPUT_DB_FILE" "SELECT COUNT(*) FROM repository_runs;")
+    success=$(sqlite3 "$OUTPUT_DB_FILE" "SELECT COUNT(*) FROM repository_runs WHERE run_status = 'SUCCESS';")
+    failed=$(sqlite3  "$OUTPUT_DB_FILE" "SELECT COUNT(*) FROM repository_runs WHERE run_status NOT IN ('SUCCESS');")
     echo ""
     echo "════════════════════════════════════════"
     echo "        PIPELINE RUN SUMMARY            "
@@ -58,7 +58,7 @@ print_run_summary() {
     echo "  Successful        : $success"
     echo "  Failed/Skipped    : $failed"
     echo "  Elapsed time      : ${elapsed}s"
-    echo "  Results stored in : $DB_FILE"
+    echo "  Results stored in : $OUTPUT_DB_FILE"
     echo "  Logs directory    : $LOG_DIR"
     echo "════════════════════════════════════════"
     echo ""
