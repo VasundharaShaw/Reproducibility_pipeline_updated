@@ -56,6 +56,7 @@ CPRPMC_test/
 ├── input/                   # Input repo lists for batch mode
 ├── output/                  # All pipeline outputs (created at runtime)
 │   ├── cloned_repos/        # Cloned repositories
+│   ├── db/                  # Pipeline results database (output/db/db.sqlite)
 │   ├── logs/                # Per-repo execution logs
 │   └── comparisons/         # JSON comparison reports
 ├── src/                     # Shell library functions
@@ -102,7 +103,7 @@ Enter a GitHub repository URL directly. You will be asked for:
 
 ### Mode 2 — Batch mode
 
-Processes repositories from `data/db.sqlite` (the source database containing 5241 repositories from Sheeba Samuel's original reproducibility study). Results are written back to the same database.
+Processes repositories from `data/db.sqlite` (the source database containing 5241 repositories from Sheeba Samuel's original reproducibility study). Results are written to `output/db/db.sqlite` — the source database is never modified.
 
 ---
 
@@ -139,7 +140,14 @@ See `.env.example` for all available options.
 
 ## Database
 
-`data/db.sqlite` is the source database from Sheeba Samuel's original study and contains 5241 repositories. **Do not overwrite this file.** Pipeline results (run status, notebook execution outcomes, reproducibility scores) are written to new tables within the same database.
+The pipeline uses two separate SQLite databases:
+
+| Database | Path | Purpose |
+|---|---|---|
+| Source DB | `data/db.sqlite` | Sheeba's original study — 5241 repositories. **Read-only, never modified.** |
+| Output DB | `output/db/db.sqlite` | Created fresh by the pipeline. Stores all execution results. |
+
+The output database is created automatically on first run. The following tables are written to `output/db/db.sqlite`:
 
 | Table | Description |
 |---|---|
