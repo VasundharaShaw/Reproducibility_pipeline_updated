@@ -43,20 +43,11 @@ SELECT last_insert_rowid();
 EOF
 }
 
-move_repo() {
-    if [ -d "$REPO_NAME" ]; then
-        log "[REPO] Moving '$REPO_NAME' to $REPOS_DIR"
-        rm -rf "$REPOS_DIR/$REPO_NAME"
-        mv "$REPO_NAME" "$REPOS_DIR/"
-    else
-        log "[ERROR] '$REPO_NAME' not found — cannot move."
-    fi
-}
-
 process_repo() {
     REPO_START_TIME=$(now_sec)
     GITHUB_REPO="$1"; NOTEBOOK_PATHS="$2"; SETUP_PATHS="$3"; REQUIREMENT_PATHS="$4"
     REPO_NAME=$(basename "$GITHUB_REPO" .git)
+    REPO_DIR="$REPOS_DIR/$REPO_NAME"
     log "[REPO] ── Starting: $REPO_NAME ──────────────────────────────"
     LOG_FILE="${LOG_DIR}/${REPO_NAME}.log"; > "$LOG_FILE"; export LOG_FILE
     create_repository_run "$REPO_ID" "$GITHUB_REPO"
@@ -79,29 +70,30 @@ process_repo() {
         finalize_repository_run "$RUN_ID" "NO_PYTHON_NOTEBOOKS" "No Python notebooks found" "$(elapsed_sec "$REPO_START_TIME")"
         return 0
     fi
-    
-    if [ -d "$REPOS_DIR/$REPO_NAME" ]; then
-        cd "$REPOS_DIR/$REPO_NAME" && git pull && cd -
+
+    # Clone into REPOS_DIR first, before any file operations
+    if [ -d "$REPO_DIR" ]; then
+        log "[REPO] Repo already exists, pulling latest..."
+        cd "$REPO_DIR" && git pull >> "$LOG_FILE" 2>&1 && cd - > /dev/null
     else
-        git clone --depth 1 "$GITHUB_REPO" "$REPOS_DIR/$REPO_NAME" >> "$LOG_FILE" 2>&1
+        log "[REPO] Cloning into $REPO_DIR..."
+        git clone --depth 1 "$GITHUB_REPO" "$REPO_DIR" >> "$LOG_FILE" 2>&1
     fi
 
-    if [ ! -d "$REPOS_DIR/$REPO_NAME" ]; then
+    if [ ! -d "$REPO_DIR" ]; then
         finalize_repository_run "$RUN_ID" "REPO_DIR_MISSING" "Directory not found after clone" "$(elapsed_sec "$REPO_START_TIME")"
         return 0
     fi
 
-    
-
     process_requirements
 
-    REQUIREMENTS_FILE="$REPO_NAME/requirements.txt"
-    if ! setup_pyenv_env "$REPO_NAME" "$REQUIREMENTS_FILE" "$SETUP_PATHS"; then
+    REQUIREMENTS_FILE="$REPO_DIR/requirements.txt"
+    if ! setup_pyenv_env "$REPO_DIR" "$REQUIREMENTS_FILE" "$SETUP_PATHS"; then
         finalize_repository_run "$RUN_ID" "$ENV_ERROR_TYPE" "$ENV_ERROR_MESSAGE" "$(elapsed_sec "$REPO_START_TIME")"
         cleanup_pyenv_env; return 0
     fi
 
-    if ! run_in_pyenv_env "$REPO_NAME"; then
+    if ! run_in_pyenv_env "$REPO_DIR"; then
         analyze_env_error "$LOG_FILE"
         finalize_repository_run "$RUN_ID" "$ENV_ERROR_TYPE" "$ENV_ERROR_MESSAGE" "$(elapsed_sec "$REPO_START_TIME")"
         cleanup_pyenv_env; return 0
@@ -111,7 +103,6 @@ process_repo() {
     export NOTEBOOKS_COUNT
     compare_notebook_outputs
     cleanup_pyenv_env
-    move_repo
 
     local total_time
     total_time=$(elapsed_sec "$REPO_START_TIME")
@@ -158,7 +149,7 @@ EOF
 
         if ! process_repo "$GITHUB_REPO" "$NOTEBOOK_PATHS" "$SETUP_PATHS" "$REQUIREMENT_PATHS"; then
             REPO_NAME=$(basename "$REPO_PATH")
-            [ -d "$REPO_NAME" ] && rm -rf "$REPO_NAME"
+            [ -d "$REPOS_DIR/$REPO_NAME" ] && rm -rf "$REPOS_DIR/$REPO_NAME"
             processed_count=$((processed_count + 1))
             continue
         fi
