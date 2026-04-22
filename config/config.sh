@@ -13,6 +13,7 @@ LOG_DIR="$OUTPUT_DIR/logs"
 DB_DIR="$PROJECT_ROOT/data"
 DB_FILE="$DB_DIR/db.sqlite"
 TARGET_COUNT="${TARGET_COUNT:-10}"
+export GIT_TERMINAL_PROMPT=0
 
 initialize_directories() {
     mkdir -p "$INPUT_DIR"
