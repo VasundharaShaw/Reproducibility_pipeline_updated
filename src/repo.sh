@@ -135,6 +135,25 @@ process_repo() {
         return 0
     fi
 
+    # Auto-discover notebooks if none provided
+    if [ -z "$NOTEBOOK_PATHS" ]; then
+        log "[REPO] No notebook paths provided — auto-discovering .ipynb files..."
+        discovered=""
+        while IFS= read -r nb; do
+            rel="${nb#$REPO_DIR/}"
+            [ -n "$discovered" ] && discovered="${discovered};${rel}" || discovered="$rel"
+        done < <(find "$REPO_DIR" -name "*.ipynb" | sort)
+
+        if [ -z "$discovered" ]; then
+            finalize_repository_run "$RUN_ID" "NO_NOTEBOOKS" "No .ipynb files found in repo" "$(elapsed_sec "$REPO_START_TIME")"
+            return 0
+        fi
+
+        log "[REPO] Discovered notebooks: $discovered"
+        NOTEBOOK_PATHS="$discovered"
+        insert_notebooks_from_paths "$REPO_ID" "$NOTEBOOK_PATHS"
+    fi
+
     process_requirements
 
     REQUIREMENTS_FILE="$REPO_DIR/requirements.txt"
