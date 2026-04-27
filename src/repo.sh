@@ -69,10 +69,10 @@ insert_notebooks_from_paths() {
 
         local existing
         existing=$(sqlite3 "$DB_FILE" \
-            "SELECT id FROM notebooks WHERE repository_id=$repo_id AND notebook_path='$nb_path' LIMIT 1;")
+            "SELECT id FROM notebooks WHERE repository_id=$repo_id AND name='$nb_path' LIMIT 1;")
         if [ -z "$existing" ]; then
             sqlite3 "$DB_FILE" \
-                "INSERT INTO notebooks (repository_id, notebook_path, language) VALUES ($repo_id, '$nb_path', 'python');"
+                "INSERT INTO notebooks (repository_id, name, language) VALUES ($repo_id, '$nb_path', 'python');"
             log "[REPO] Registered notebook: $nb_path" >&2
         fi
     done
